@@ -12,7 +12,7 @@ echo ========================================
 echo.
 
 REM Replace this with your actual repository URL from GitHub
-set NEW_REPO_URL=YOUR_NEW_REPO_URL
+set NEW_REPO_URL=https://github.com/archana-mukunthamani/digital-twin-mcp-portfolio.git
 
 if "%NEW_REPO_URL%"=="YOUR_NEW_REPO_URL" (
     echo ERROR: Please edit this script and replace YOUR_NEW_REPO_URL with your actual GitHub repository URL

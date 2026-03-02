@@ -37,10 +37,25 @@ Your code is ready to deploy! Follow these steps to get your Digital Twin MCP Se
 - Should auto-detect as **Next.js**
 - If not, select it manually
 
-### Build Settings (Should Auto-Detect)
-- Build Command: `pnpm build`
-- Output Directory: `.next`
-- Install Command: `pnpm install`
+### Build Settings
+**If these fields are locked and you can't edit them during import, don't worry!**
+
+You can edit them after creating the project:
+
+**Option A: Edit After Import**
+1. Click "Import" (even if settings look wrong)
+2. Go to Project Settings → General
+3. Scroll to "Build & Development Settings"
+4. Click "Override" to edit each field
+5. Set the values below
+6. Redeploy
+
+**Correct Build Settings:**
+- **Build Command**: `pnpm build` (NOT `cd mcp-server && ...`)
+- **Output Directory**: `.next`
+- **Install Command**: `pnpm install`
+
+**Why no `cd mcp-server`?** Because root directory is already set to `mcp-server`, so Vercel is already in that directory!
 
 ---
 
@@ -101,6 +116,29 @@ Once deployed, update your GitHub repository with the live URL:
 ---
 
 ## Troubleshooting
+
+### Build Command Error: "cd mcp-server && pnpm install && pnpm build" exited with 1
+
+**Problem**: Build fails with command error, or you can't edit build settings during import
+
+**Solution - Edit Build Settings in Vercel:**
+
+1. **Go to your project** in Vercel dashboard
+2. Click **"Settings"** (top navigation)
+3. Click **"General"** in the left sidebar
+4. Scroll down to **"Build & Development Settings"**
+5. Click **"Override"** next to each field to enable editing
+6. Set these values:
+   - **Build Command**: `pnpm build` (remove any `cd mcp-server`)
+   - **Output Directory**: `.next`
+   - **Install Command**: `pnpm install`
+   - **Root Directory**: `mcp-server` (if not already set)
+7. Click **"Save"**
+8. Go to **"Deployments"** tab
+9. Click the **"..."** menu on the latest deployment
+10. Click **"Redeploy"**
+
+**Key Point**: Since root directory is `mcp-server`, the build commands should NOT include `cd mcp-server`!
 
 ### Build Fails
 

@@ -1,7 +1,6 @@
 {
-  "buildCommand": "cd mcp-server && pnpm install && pnpm build",
-  "outputDirectory": "mcp-server/.next",
+  "buildCommand": "pnpm build",
+  "outputDirectory": ".next",
   "installCommand": "pnpm install",
-  "framework": "nextjs",
-  "regions": ["iad1"]
+  "devCommand": "pnpm dev"
 }

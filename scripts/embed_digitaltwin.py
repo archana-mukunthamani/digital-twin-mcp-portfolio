@@ -255,6 +255,24 @@ class VectorDatabaseSetup:
                         category="technical",
                         tags=["interview", "technical", "skills"]
                     ))
+        
+        # Interview Screening - Screening Questions
+        if 'interview_screening' in profile_data:
+            interview_screening = profile_data['interview_screening']
+            
+            if 'screening_questions' in interview_screening:
+                for key, item in interview_screening['screening_questions'].items():
+                    question = item.get('question', '')
+                    answer = item.get('answer', '')
+                    
+                    self.chunks.append(ContentChunk(
+                        id=f"screening_{key}",
+                        title=f"Screening Q&A - {question[:50]}...",
+                        content=f"Question: {question}. Answer: {answer}",
+                        type="interview",
+                        category="screening",
+                        tags=["interview", "screening", key]
+                    ))
 
         # Career Transition
         if 'career_transition' in profile_data:

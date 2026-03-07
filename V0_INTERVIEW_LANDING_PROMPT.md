@@ -198,11 +198,16 @@ Props Interface:
 ```typescript
 interface InterviewLandingProps {
   onStartInterview: (jobDescription: string) => void
+  onViewAnalytics?: () => void
+  interviewCount?: number
 }
 ```
 
 The component should:
 - Accept onStartInterview callback prop
+- Optionally accept onViewAnalytics callback for analytics button
+- Display interview count badge if interviewCount > 0
+- Show "View Analytics" button if interviewCount >= 2
 - Validate textarea has minimum 50 characters
 - Pass job description to parent via onStartInterview when "Begin Interview" is clicked
 - Handle loading/disabled states appropriately

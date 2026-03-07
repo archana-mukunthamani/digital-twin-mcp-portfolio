@@ -3,8 +3,8 @@
 ## Current Status ✅
 
 - ✅ Changes committed to local repository
-- ✅ Pushed to origin: `Himani1201/digital-twin-project-team2`
-- ✅ Pushed to fork: `archana-mukunthamani/digital-twin-project-team2-1`
+- ✅ Pushed to origin: `archana-mukunthamani/digital-twin-mcp-portfolio`
+- ✅ Repository updated with proper attribution
 - ✅ Deployment documentation created
 
 ---
@@ -17,7 +17,7 @@
 
 2. **Import Repository**:
    - Click "Add New..." → "Project"
-   - Select `archana-mukunthamani/digital-twin-project-team2-1`
+   - Select `archana-mukunthamani/digital-twin-mcp-portfolio`
    - Click "Import"
 
 3. **Configure Project** (CRITICAL STEP!):

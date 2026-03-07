@@ -4,12 +4,10 @@ This guide will help you create a completely new GitHub repository for your port
 
 ## 📝 Overview
 
-You're transitioning from:
-- ❌ Team repository: `Himani1201/digital-twin-project-team2`
-- ❌ Fork: `archana-mukunthamani/digital-twin-project-team2-1`
-
-To:
-- ✅ **Your own portfolio repository** (fresh start, professional presentation)
+You have successfully created your portfolio repository:
+- ✅ **Portfolio Repository**: `archana-mukunthamani/digital-twin-mcp-portfolio`
+- ✅ Professional presentation with proper attribution
+- ✅ Clean Git history and documentation
 
 ---
 

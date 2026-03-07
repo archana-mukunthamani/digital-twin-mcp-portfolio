@@ -10,8 +10,7 @@ This guide provides step-by-step instructions for deploying the Digital Twin MCP
 
 ### Current Repository Structure
 
-- **Origin**: `https://github.com/Himani1201/digital-twin-project-team2.git` (Main team repository)
-- **Fork**: `https://github.com/archana-mukunthamani/digital-twin-project-team2-1.git` (Deployment fork)
+- **Origin**: `https://github.com/archana-mukunthamani/digital-twin-mcp-portfolio.git` (Your portfolio repository)
 
 ### Git Remotes
 
@@ -20,10 +19,8 @@ This guide provides step-by-step instructions for deploying the Digital Twin MCP
 git remote -v
 
 # Expected output:
-# myfork  https://github.com/archana-mukunthamani/digital-twin-project-team2-1.git (fetch)
-# myfork  https://github.com/archana-mukunthamani/digital-twin-project-team2-1.git (push)
-# origin  https://github.com/Himani1201/digital-twin-project-team2.git (fetch)
-# origin  https://github.com/Himani1201/digital-twin-project-team2.git (push)
+# origin  https://github.com/archana-mukunthamani/digital-twin-mcp-portfolio.git (fetch)
+# origin  https://github.com/archana-mukunthamani/digital-twin-mcp-portfolio.git (push)
 ```
 
 ---

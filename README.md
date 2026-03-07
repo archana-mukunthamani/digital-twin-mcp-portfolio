@@ -16,41 +16,51 @@ This project implements a **Model Context Protocol (MCP) server** that acts as a
 - 🔍 **Semantic Search**: Vector-based retrieval using Upstash Vector for accurate information retrieval
 - 🧠 **RAG Architecture**: Combines retrieval with LLM generation for grounded responses
 - 🎯 **Job Matching**: Analyzes job postings and matches qualifications
-- 💬 **Interactive Interview**: Simulates technical interview scenarios
+- 💬 **Interactive Interview**: Simulates technical interview scenarios with job-specific questions
+- 📊 **Analytics Dashboard**: Track interview performance across multiple sessions with persistent storage
+- 🗄️ **Data Persistence**: Interview results stored in Upstash Redis for cross-session analytics
 - 🌐 **Dual Interface**: Works as both an MCP server (for VS Code/Claude Desktop) and a web UI
 
 ## 🏗️ Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    User Query                                │
+│                    User Query / Interview                    │
 └────────────────────┬────────────────────────────────────────┘
                      │
                      ▼
 ┌─────────────────────────────────────────────────────────────┐
 │              MCP Server / Web UI                             │
 │  (Next.js 15 + TypeScript)                                  │
-└────────────────────┬────────────────────────────────────────┘
-                     │
-                     ▼
+│  • Interview Landing Page                                   │
+│  • Analytics Dashboard                                      │
+└────────────┬────────────────────────────┬───────────────────┘
+             │                            │
+             ▼                            ▼
+┌────────────────────────────┐  ┌────────────────────────────┐
+│   Vector Search (Upstash)  │  │  Analytics DB (Redis)      │
+│  • Semantic search         │  │  • Interview results       │
+│  • Profile data retrieval  │  │  • Performance tracking    │
+│  • Top-K retrieval (k=5)   │  │  • Trend calculation       │
+│  • Metadata filtering      │  │  • Historic data           │
+└────────────┬───────────────┘  └────────────────────────────┘
+             │
+             ▼
 ┌─────────────────────────────────────────────────────────────┐
-│            Vector Search (Upstash)                           │
-│  • Semantic search with metadata                            │
-│  • Top-K retrieval (k=3)                                    │
-│  • Context filtering                                         │
-└────────────────────┬────────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────────┐
-│          LLM Generation (Groq/Llama)                         │
+│          LLM Generation (Groq/Llama 3.3 70B)                │
 │  • Context-aware response                                   │
 │  • Grounded in retrieved data                               │
-│  • Professional tone                                         │
-└────────────────────┬────────────────────────────────────────┘
-                     │
-                     ▼
+│  • Professional interview tone                              │
+│  • STAR format responses                                    │
+└────────────┬────────────────────────────────────────────────┘
+             │
+             ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                   Response                                   │
+│         Response + Assessment + Analytics                    │
+│  • Interview answers                                        │
+│  • Performance scores                                       │
+│  • Recommendations                                          │
+│  • Stored for future analysis                               │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -61,8 +71,10 @@ This project implements a **Model Context Protocol (MCP) server** that acts as a
 | **Framework** | Next.js 15.5.3 |
 | **Language** | TypeScript (strict mode) |
 | **Vector DB** | Upstash Vector |
+| **Analytics DB** | Upstash Redis |
 | **LLM** | Groq API (Llama 3.3 70B) |
 | **UI** | ShadCN UI + Tailwind CSS |
+| **Charts** | Recharts (data visualization) |
 | **Protocol** | Model Context Protocol (MCP) |
 | **Hosting** | Vercel (production ready) |
 
@@ -94,8 +106,10 @@ This project implements a **Model Context Protocol (MCP) server** that acts as a
    
    Create `.env.local` in the `mcp-server` directory:
    ```env
-   UPSTASH_VECTOR_REST_URL=your_upstash_url
-   UPSTASH_VECTOR_REST_TOKEN=your_upstash_token
+   UPSTASH_VECTOR_REST_URL=your_upstash_vector_url
+   UPSTASH_VECTOR_REST_TOKEN=your_upstash_vector_token
+   UPSTASH_REDIS_REST_URL=your_upstash_redis_url
+   UPSTASH_REDIS_REST_TOKEN=your_upstash_redis_token
    GROQ_API_KEY=your_groq_api_key
    ```
 
@@ -187,52 +201,151 @@ Query: "Summarize my experience for a senior developer role"
 → Provides concise professional summary
 ```
 
+### 4. **Technical Interview Simulation** 🆕
+```
+Feature: Job Description Paste Interface
+→ User pastes job posting directly into web UI
+→ System analyzes requirements and generates role-specific questions
+→ Digital Twin conducts realistic interview using RAG
+→ Provides comprehensive performance assessment with scores
+
+Workflow:
+1. Paste job description (minimum 50 characters)
+2. AI generates 5 job-specific interview questions
+3. Digital Twin answers questions based on professional profile
+4. Receive detailed assessment:
+   - Overall score (0-100)
+   - Category scores (Technical, Experience, Communication, Cultural Fit)
+   - Strengths and areas for improvement
+   - Hiring recommendation (Pass/Conditional/Fail)
+   - Full transcript available for review
+```
+
+### 5. **Interview Analytics Dashboard** 🆕
+```
+Feature: Performance Tracking Across Multiple Interviews
+→ Store all interview results in Upstash Redis
+→ Track performance trends over time
+→ Visualize category-specific improvements
+→ Generate insights and recommendations
+
+Analytics Include:
+- Total interviews conducted
+- Average score and success rate
+- Performance trends (line chart)
+- Category breakdown (Technical, Experience, Communication, Cultural Fit)
+- Recent interview history (last 5 interviews)
+- Common strengths and improvement areas
+- AI-generated performance insights
+- Export capability (PDF reports)
+```
+
 ## 📂 Project Structure
 
 ```
 digital-twin-mcp-portfolio/
-├── mcp-server/                 # Next.js MCP server
+├── mcp-server/                        # Next.js MCP server
 │   ├── app/
-│   │   ├── api/mcp/           # MCP endpoint
-│   │   ├── components/        # UI components
-│   │   └── actions/           # Server actions
+│   │   ├── api/mcp/                   # MCP endpoint
+│   │   ├── interview/                 # Interview feature
+│   │   │   ├── components/            # Landing page, analytics UI
+│   │   │   └── page.tsx               # Interview orchestration
+│   │   ├── actions/                   # Server actions
+│   │   │   ├── interview-analytics.ts # Analytics CRUD operations
+│   │   │   └── load-job-postings.ts   # Job posting handling
+│   │   └── components/                # Shared UI components (shadcn/ui)
 │   └── lib/
-│       └── digital-twin.ts    # Core RAG logic
-├── scripts/                   # Data processing scripts
-│   ├── embed_digitaltwin.py   # Profile data embedding
-│   └── embed_job_postings.py  # Job posting processing
-├── data/                      # Profile data
-│   └── digitaltwin_clean.json
-└── docs/                      # Documentation
+│       ├── digital-twin.ts            # Core RAG logic
+│       └── redis.ts                   # Redis client for analytics
+├── scripts/                           # Data processing scripts
+│   ├── embed_digitaltwin.py           # Profile data embedding
+│   └── embed_job_postings.py          # Job posting processing
+├── data/                              # Profile data
+│   └── digitaltwin_clean.json        # Professional profile
+├── job-postings/                      # Sample job descriptions
+└── docs/                              # Documentation
+    ├── design.md                      # Technical design
+    ├── prd.md                         # Product requirements
+    └── VECTOR_SETUP_GUIDE.md          # Setup instructions
 ```
 
 ## 🔬 How It Works
 
-### RAG Pipeline
+### RAG Pipeline (Interview & Query Response)
 
 1. **Data Preparation**
    - Professional profile stored in JSON format
    - Chunked into semantic sections (education, experience, projects, skills)
    - Each chunk embedded using Upstash's text embedding model
+   - Stored in Upstash Vector with metadata tags
 
 2. **Query Processing**
-   - User query is converted to vector embedding
-   - Semantic search retrieves top-3 most relevant chunks
+   - User query or interview question is converted to vector embedding
+   - Semantic search retrieves top-5 most relevant chunks
    - Includes metadata (category, context) for better filtering
+   - Results ranked by relevance score
 
 3. **Response Generation**
    - Retrieved context passed to LLM (Llama 3.3 70B via Groq)
    - Explicit instructions to ground response in retrieved data
-   - Professional, accurate, and context-aware responses
+   - Temperature set to 0.3 for factual, grounded responses
+   - Professional, accurate, and context-aware interview answers
+   - STAR format for behavioral questions
+
+4. **Assessment & Storage**
+   - Interview responses evaluated across multiple categories
+   - Performance scores calculated (Technical, Experience, Communication, Cultural Fit)
+   - Results stored in Upstash Redis for analytics
+   - Hiring recommendation generated (Pass/Conditional/Fail)
+
+### Analytics Pipeline
+
+1. **Data Collection**
+   - Each interview result saved to Upstash Redis
+   - Stored with timestamp, scores, job details, and full transcript
+   - Indexed for efficient retrieval and aggregation
+
+2. **Trend Calculation**
+   - Historical data retrieved from Redis
+   - Average scores calculated across all interviews
+   - Performance trends identified over time
+   - Success rates computed by decision type
+
+3. **Visualization**
+   - Line charts showing score progression
+   - Category breakdowns with progress bars
+   - Recent interview history in data tables
+   - AI-generated insights based on patterns
 
 ### Vector Search Configuration
 
 ```typescript
 const results = await index.query({
   data: query,
-  topK: 3,
+  topK: 5,  // Increased for better context
   includeMetadata: true
 });
+```
+
+### Analytics Storage Schema
+
+```typescript
+interface InterviewResult {
+  id: string
+  timestamp: number
+  jobTitle: string
+  overallScore: number
+  categoryScores: {
+    technical: number
+    experience: number
+    communication: number
+    culturalFit: number
+  }
+  strengths: string[]
+  improvements: string[]
+  decision: 'pass' | 'conditional' | 'fail'
+  transcript: Array<{ role: string; content: string }>
+}
 ```
 
 ## 👤 Author

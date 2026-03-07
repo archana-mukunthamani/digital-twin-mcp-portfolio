@@ -17,14 +17,20 @@ Components:
 - Frontends: VS Code Copilot (Agent), Claude Desktop (mcp-remote), Web UI (Next.js)
 - MCP Server: Next.js server actions exposing JSON-RPC `/api/mcp`
 - RAG Pipeline: Query enhancement → Vector search → Context assembly → LLM formatting
-- Vector DB: Upstash Vector (REST API)
-- LLM: Groq (Llama 3.1 family)
+- Vector DB: Upstash Vector (REST API) - Professional profile data
+- Analytics DB: Upstash Redis (REST API) - Interview results and performance tracking
+- LLM: Groq (Llama 3.3 family)
 - Storage & Secrets: Environment variables for API keys, optional encrypted store for profiles
 - Observability: Metrics (Prometheus), Logs (structured logs + Sentry/LogDNA)
 
 Diagram (conceptual):
 
-User → Frontend → MCP Server → (RAG Pipeline → Upstash Vector) and (LLM: Groq)
+```
+User → Frontend → MCP Server → RAG Pipeline → Upstash Vector (Profile Data)
+                      ↓                           Groq LLM
+                      ↓
+                Analytics → Upstash Redis (Interview Results)
+```
 
 ## Data Model
 

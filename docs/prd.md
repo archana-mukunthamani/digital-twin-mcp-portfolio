@@ -79,8 +79,9 @@ Create an intelligent, production-ready digital twin AI agent that serves as a p
 
 #### 2.1.5 Interview Simulation & Testing
 - **Job Posting Analysis**:
-  - Import real job postings from Seek.com.au
+  - Paste job descriptions directly into interface
   - Analyze job requirements against profile
+  - Generate role-specific questions automatically
   - Identify skills gaps
   
 - **Multi-Persona Interview Simulation**:
@@ -90,6 +91,25 @@ Create an intelligent, production-ready digital twin AI agent that serves as a p
   - Project manager collaboration evaluation
   - Executive cultural fit assessment
   - Leadership potential evaluation
+
+#### 2.1.6 Interview Analytics Dashboard
+- **Performance Tracking**:
+  - Store interview results in Upstash Redis
+  - Track scores across multiple interviews
+  - Category-based performance analysis (Technical, Experience, Communication, Cultural Fit)
+  - Success rate calculation (pass/conditional/fail)
+  
+- **Data Visualization**:
+  - Performance trends over time (line charts)
+  - Category score breakdowns (progress bars)
+  - Recent interview history (data table)
+  - AI-generated insights and recommendations
+  
+- **Analytics Features**:
+  - Export reports as PDF
+  - Compare performance across different roles
+  - Identify common strengths and improvement areas
+  - Track progress over time with trend analysis
 
 ---
 

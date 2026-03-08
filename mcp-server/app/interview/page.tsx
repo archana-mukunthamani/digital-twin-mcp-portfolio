@@ -41,69 +41,111 @@ export default function InterviewPage() {
     const lowerDesc = jobDesc.toLowerCase()
     const questions: string[] = []
     
-    // Score-based keyword detection to identify PRIMARY role focus
+    // Enhanced keyword detection with lower thresholds and more patterns
     const keywordScores = {
-      dataAnalyst: (lowerDesc.match(/data analyst|data profiling|bi tool|snowflake|data warehouse/g) || []).length,
-      oracleDB: (lowerDesc.match(/oracle|pl[\/-]?sql/g) || []).length,
-      cloudInfra: (lowerDesc.match(/azure|aws|cloud platform|m365|microsoft 365|sharepoint|azure ad/g) || []).length,
-      scripting: (lowerDesc.match(/python|bash|powershell|scripting|automation/g) || []).length,
-      support: (lowerDesc.match(/application support|technical support|troubleshoot|incident/g) || []).length,
-      sqlGeneral: (lowerDesc.match(/\bsql\b|database management|query optimization/g) || []).length,
+      dataAnalyst: (lowerDesc.match(/data analyst|analyst|data profil|bi tool|snowflake|data warehouse|tableau|power bi|analytics|etl/gi) || []).length,
+      oracleDB: (lowerDesc.match(/oracle|pl[\/-]?sql|sql developer|database admin|dba/gi) || []).length,
+      cloudInfra: (lowerDesc.match(/azure|aws|cloud|m365|microsoft 365|sharepoint|office 365|azure ad|saas/gi) || []).length,
+      scripting: (lowerDesc.match(/python|bash|powershell|script|automat|jenkins|ci[\/-]?cd/gi) || []).length,
+      support: (lowerDesc.match(/support|troubleshoot|incident|ticket|helpdesk|resolve|diagnos/gi) || []).length,
+      sqlGeneral: (lowerDesc.match(/\bsql\b|database|query|t-sql|mysql|postgresql/gi) || []).length,
+      webDev: (lowerDesc.match(/react|next\.?js|typescript|javascript|node\.?js|frontend|backend|full[\s-]?stack|api|rest/gi) || []).length,
+      consultant: (lowerDesc.match(/consult|solution|implement|requirement|stakeholder|business analyst/gi) || []).length,
     }
     
-    // Determine PRIMARY role type based on highest scores
-    const topSkill = Object.entries(keywordScores).sort((a, b) => b[1] - a[1])[0]
+    console.log('📊 Keyword Detection Scores:', keywordScores)
     
-    // Generate questions prioritized by role type
-    if (topSkill[0] === 'cloudInfra' && topSkill[1] > 2) {
-      // Cloud/Azure-focused role (e.g., Orbus Azure M365 role)
-      questions.push('What is your experience with Microsoft Azure and cloud-based applications? Describe a cloud infrastructure project you worked on.')
-      if (lowerDesc.includes('m365') || lowerDesc.includes('microsoft 365') || lowerDesc.includes('sharepoint')) {
-        questions.push('Tell me about your experience with Microsoft 365, SharePoint, or Azure AD administration. What administrative tasks have you performed?')
+    // Sort all categories by score
+    const sortedCategories = Object.entries(keywordScores).sort((a, b) => b[1] - a[1])
+    const topCategory = sortedCategories[0]
+    const secondCategory = sortedCategories[1]
+    
+    console.log(`🎯 Top Category: ${topCategory[0]} (score: ${topCategory[1]})`)
+    console.log(`🥈 Second Category: ${secondCategory[0]} (score: ${secondCategory[1]})`)
+    
+    // Generate questions based on top 2 categories (more specific matching)
+    // Cloud/Azure-focused role
+    if (topCategory[0] === 'cloudInfra' && topCategory[1] >= 2) {
+      questions.push('What is your experience with cloud platforms like Microsoft Azure or AWS? Describe a specific cloud project you worked on.')
+      if (lowerDesc.includes('m365') || lowerDesc.includes('365') || lowerDesc.includes('sharepoint')) {
+        questions.push('Tell me about your experience with Microsoft 365 or SharePoint. What specific features or administration tasks have you worked with?')
+      } else {
+        questions.push('Describe your experience with cloud-based application deployment or management. What tools and services have you used?')
       }
-      if (lowerDesc.includes('api') || lowerDesc.includes('restful')) {
-        questions.push('Describe your experience troubleshooting RESTful APIs or web services. Walk me through a complex API issue you resolved.')
+      if (lowerDesc.includes('api') || lowerDesc.includes('rest')) {
+        questions.push('Walk me through your experience with APIs or web services in cloud environments. How do you handle integration challenges?')
       }
-      questions.push('How do you approach supporting cloud-based applications? What monitoring and diagnostic tools do you use?')
-    } else if (topSkill[0] === 'oracleDB' && topSkill[1] > 2) {
-      // Oracle specialist role
-      questions.push('Describe your experience with Oracle PL/SQL stored procedures. What is the most complex procedure you have developed?')
-      questions.push('Tell me about a time you optimized Oracle database performance. What techniques did you use and what were the results?')
-      questions.push('How do you approach database troubleshooting when queries are running slowly? Walk me through your diagnostic process.')
-    } else if (topSkill[0] === 'dataAnalyst' && topSkill[1] > 2) {
-      // Data Analyst role  
-      questions.push('Describe your approach to data profiling and source-to-target analysis. Can you walk me through a data quality issue you identified and resolved?')
-      questions.push('Tell me about your experience with SQL and cloud data warehouses like Snowflake. Describe a complex analytical query you built.')
-      if (lowerDesc.includes('bi') || lowerDesc.includes('visualization')) {
-        questions.push('What BI tools and data visualization platforms have you used? Describe a dashboard or report you created that drove business insights.')
-      }
-      if (lowerDesc.includes('agile')) {
-        questions.push('Tell me about your experience working in Agile environments on data projects. How do you collaborate with stakeholders?')
-      }
-    } else if (topSkill[0] === 'scripting' && topSkill[1] > 2) {
-      // Scripting/automation focused
-      questions.push('Describe your scripting and automation experience. What languages do you use and what processes have you automated?')
-      questions.push('Tell me about a complex automation script you developed. What was the problem and how did your solution improve efficiency?')
-    } else if (topSkill[0] === 'support' && topSkill[1] > 1) {
-      // Technical support role
-      questions.push('Tell me about a time when you had to troubleshoot a complex technical issue. Walk me through your problem-solving methodology.')
-      if (keywordScores.sqlGeneral > 0) {
-        questions.push('Describe your experience using SQL for support and data analysis. How have you used queries to diagnose issues?')
-      }
-      if (keywordScores.scripting > 0) {
-        questions.push('What scripting skills do you have for automation and support tasks? Provide an example of a script you wrote.')
-      }
-    } else if (keywordScores.sqlGeneral > 1) {
-      // SQL/Database general role
-      questions.push('Tell me about your experience with SQL and database management. Can you describe a complex query or database optimization you implemented?')
     }
     
-    // Always include 1-2 general questions to reach 5 total
-    questions.push('What relevant work experience do you have that makes you a strong fit for this role?')
-    questions.push('Why are you interested in this specific position and company?')
+    // Oracle/Database specialist
+    if (topCategory[0] === 'oracleDB' && topCategory[1] >= 2) {
+      questions.push('Describe your hands-on experience with Oracle databases. What specific Oracle features or tools have you worked with?')
+      questions.push('Tell me about a time you optimized database performance or resolved a complex SQL issue. What was your approach?')
+    } else if (secondCategory[0] === 'oracleDB' && secondCategory[1] >= 1) {
+      questions.push('What is your experience with Oracle or other enterprise database systems?')
+    }
+    
+    // Data Analyst role
+    if (topCategory[0] === 'dataAnalyst' && topCategory[1] >= 2) {
+      questions.push('Describe your experience with data analysis and reporting. What analytical tools or platforms have you used?')
+      questions.push('Tell me about a time you identified and resolved a data quality or data integrity issue. What was your process?')
+      if (lowerDesc.includes('bi') || lowerDesc.includes('visual') || lowerDesc.includes('dashboard')) {
+        questions.push('What data visualization or BI tools have you used? Can you describe a dashboard or report you created?')
+      }
+    } else if (secondCategory[0] === 'dataAnalyst' && secondCategory[1] >= 1) {
+      questions.push('Do you have experience with data analysis or working with analytical tools? Please describe.')
+    }
+    
+    // Web Development role
+    if (topCategory[0] === 'webDev' && topCategory[1] >= 2) {
+      questions.push('Describe your experience with modern web development. What frameworks and technologies are you most comfortable with?')
+      questions.push('Tell me about a challenging web application or API project you worked on. What technical decisions did you make?')
+    } else if (secondCategory[0] === 'webDev' && secondCategory[1] >= 1) {
+      questions.push('What is your experience with web development technologies or frameworks?')
+    }
+    
+    // Scripting/Automation
+    if (topCategory[0] === 'scripting' && topCategory[1] >= 2) {
+      questions.push('Describe your scripting and automation experience. What languages do you use and what have you automated?')
+      questions.push('Tell me about a script or automation tool you developed that improved efficiency or solved a problem.')
+    } else if ((secondCategory[0] === 'scripting' && secondCategory[1] >= 1) || lowerDesc.includes('automat')) {
+      questions.push('Do you have experience with scripting or automation? What tools or languages have you used?')
+    }
+    
+    // Technical Support role
+    if (topCategory[0] === 'support' && topCategory[1] >= 2) {
+      questions.push('Tell me about your experience in technical support or troubleshooting. What types of issues have you resolved?')
+      questions.push('Describe a particularly challenging support incident. How did you diagnose and resolve it?')
+    }
+    
+    // SQL General (if not already covered by Oracle questions)
+    if (topCategory[0] === 'sqlGeneral' && topCategory[1] >= 2) {
+      questions.push('Tell me about your SQL experience. What types of queries have you written and which database systems have you worked with?')
+    } else if (secondCategory[0] === 'sqlGeneral' && secondCategory[1] >= 1 && questions.length < 3) {
+      questions.push('What is your experience with SQL and database queries?')
+    }
+    
+    // Consultant/Solution role
+    if (topCategory[0] === 'consultant' && topCategory[1] >= 2) {
+      questions.push('Describe your experience working with stakeholders to gather requirements and deliver solutions.')
+      questions.push('Tell me about a time you had to implement a solution based on business needs. How did you approach it?')
+    }
+    
+    // Fill to 5 questions with intelligent general questions (different based on role)
+    while (questions.length < 5) {
+      if (questions.length === 3 || questions.length === 0) {
+        questions.push('What relevant work experience and skills make you a strong fit for this position? Please be specific.')
+      } else if (questions.length === 4 || questions.length === 1) {
+        questions.push('Why are you interested in this specific position and company? What attracts you to this opportunity?')
+      } else {
+        questions.push('Describe a challenging project or situation from your experience. How did you handle it and what was the outcome?')
+      }
+    }
     
     // Return exactly 5 questions
-    return questions.slice(0, 5)
+    const finalQuestions = questions.slice(0, 5)
+    console.log('❓ Generated Questions:', finalQuestions)
+    return finalQuestions
   }
 
   const startInterview = async () => {

@@ -519,8 +519,8 @@ ${decision === 'pass' ? '\\n✅ **For Hiring Team:**\\n   1. Schedule technical 
       const isSupportRole = lowerJobDesc.includes('support') || lowerJobDesc.includes('troubleshoot')
       const isWebDevRole = lowerJobDesc.includes('react') || lowerJobDesc.includes('next') || lowerJobDesc.includes('frontend') || lowerJobDesc.includes('full-stack')
       
-      // Generate role-specific strengths (when score >= 75)
-      if (resultData.technicalScore >= 75) {
+      // Generate role-specific strengths (when score >= 60)
+      if (resultData.technicalScore >= 60) {
         if (isCloudRole) strengths.push('Demonstrated cloud platform knowledge and architecture understanding')
         else if (isDataRole) strengths.push('Strong analytical skills and data-driven approach')
         else if (isDatabaseRole) strengths.push('Solid database management and SQL proficiency')
@@ -528,18 +528,18 @@ ${decision === 'pass' ? '\\n✅ **For Hiring Team:**\\n   1. Schedule technical 
         else strengths.push('Good technical problem-solving abilities')
       }
       
-      if (resultData.experienceScore >= 75) {
+      if (resultData.experienceScore >= 60) {
         if (isCloudRole) strengths.push('Relevant cloud infrastructure project experience')
         else if (isDataRole) strengths.push('Practical experience with data analysis workflows')
         else if (isSupportRole) strengths.push('Proven troubleshooting and support experience')
         else strengths.push('Demonstrated relevant hands-on experience')
       }
       
-      if (resultData.communicationScore >= 75) {
+      if (resultData.communicationScore >= 60) {
         strengths.push('Clear communication with structured responses')
       }
       
-      if (resultData.cultureFitScore >= 75) {
+      if (resultData.cultureFitScore >= 60) {
         strengths.push('Good alignment with role requirements and expectations')
       }
       

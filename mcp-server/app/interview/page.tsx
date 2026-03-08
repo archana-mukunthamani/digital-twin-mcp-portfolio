@@ -507,19 +507,65 @@ ${decision === 'pass' ? '\\n✅ **For Hiring Team:**\\n   1. Schedule technical 
       })
       console.log(`✅ Generated transcript with ${transcript.length} Q&A pairs`)
 
-      // Generate strengths and improvements based on scores
+      // Generate context-aware strengths and improvements based on job role and scores
       const strengths: string[] = []
       const improvements: string[] = []
       
-      if (resultData.communicationScore >= 80) strengths.push('Clear, structured communication style')
-      if (resultData.technicalScore >= 80) strengths.push('Strong technical knowledge and problem-solving')
-      if (resultData.experienceScore >= 80) strengths.push('Relevant hands-on experience demonstrated')
-      if (resultData.cultureFitScore >= 80) strengths.push('Good cultural fit and team collaboration')
+      // Analyze job description for context
+      const lowerJobDesc = jobDescription.toLowerCase()
+      const isCloudRole = lowerJobDesc.includes('cloud') || lowerJobDesc.includes('azure') || lowerJobDesc.includes('aws')
+      const isDataRole = lowerJobDesc.includes('data') || lowerJobDesc.includes('analyst') || lowerJobDesc.includes('bi')
+      const isDatabaseRole = lowerJobDesc.includes('oracle') || lowerJobDesc.includes('database') || lowerJobDesc.includes('sql')
+      const isSupportRole = lowerJobDesc.includes('support') || lowerJobDesc.includes('troubleshoot')
+      const isWebDevRole = lowerJobDesc.includes('react') || lowerJobDesc.includes('next') || lowerJobDesc.includes('frontend') || lowerJobDesc.includes('full-stack')
       
-      if (resultData.technicalScore < 75) improvements.push('Deepen technical knowledge in core areas')
-      if (resultData.communicationScore < 75) improvements.push('Work on communication clarity and structure')
-      if (resultData.experienceScore < 75) improvements.push('Gain more hands-on project experience')
-      if (resultData.cultureFitScore < 75) improvements.push('Align better with company values and culture')
+      // Generate role-specific strengths (when score >= 75)
+      if (resultData.technicalScore >= 75) {
+        if (isCloudRole) strengths.push('Demonstrated cloud platform knowledge and architecture understanding')
+        else if (isDataRole) strengths.push('Strong analytical skills and data-driven approach')
+        else if (isDatabaseRole) strengths.push('Solid database management and SQL proficiency')
+        else if (isWebDevRole) strengths.push('Strong web development technical foundation')
+        else strengths.push('Good technical problem-solving abilities')
+      }
+      
+      if (resultData.experienceScore >= 75) {
+        if (isCloudRole) strengths.push('Relevant cloud infrastructure project experience')
+        else if (isDataRole) strengths.push('Practical experience with data analysis workflows')
+        else if (isSupportRole) strengths.push('Proven troubleshooting and support experience')
+        else strengths.push('Demonstrated relevant hands-on experience')
+      }
+      
+      if (resultData.communicationScore >= 75) {
+        strengths.push('Clear communication with structured responses')
+      }
+      
+      if (resultData.cultureFitScore >= 75) {
+        strengths.push('Good alignment with role requirements and expectations')
+      }
+      
+      // Generate role-specific improvements (when score < 70)
+      if (resultData.technicalScore < 70) {
+        if (isCloudRole) improvements.push('Deepen cloud architecture and service knowledge')
+        else if (isDataRole) improvements.push('Enhance data analysis and visualization skills')
+        else if (isDatabaseRole) improvements.push('Strengthen database optimization expertise')
+        else if (isWebDevRole) improvements.push('Expand modern framework proficiency')
+        else improvements.push('Deepen technical knowledge in core areas')
+      }
+      
+      if (resultData.experienceScore < 70) {
+        if (isCloudRole) improvements.push('Gain more cloud migration or deployment experience')
+        else if (isDataRole) improvements.push('Build portfolio of data projects with measurable impact')
+        else if (isSupportRole) improvements.push('Broaden incident resolution case studies')
+        else improvements.push('Gain more hands-on project experience')
+      }
+      
+      if (resultData.communicationScore < 70) {
+        improvements.push('Work on communication clarity and structure')
+      }
+      
+      if (resultData.cultureFitScore < 70) {
+        improvements.push('Better align responses with company values and culture')
+      }
 
       // Generate insights
       const insights: string[] = [

@@ -4,7 +4,7 @@ import Groq from 'groq-sdk'
 import { z } from 'zod'
 
 // Environment configuration
-const DEFAULT_MODEL = "llama-3.1-8b-instant"
+const DEFAULT_MODEL = "llama-3.3-70b-versatile" // Using more capable model for better grounding
 
 const getEnvVars = () => ({
   UPSTASH_VECTOR_REST_URL: process.env.UPSTASH_VECTOR_REST_URL || process.env.test_UPSTASH_VECTOR_REST_URL,
@@ -99,7 +99,7 @@ function getGroqClient(): Groq | null {
 }
 
 // Core RAG functionality
-export async function queryVectors(queryText: string, topK: number = 3): Promise<VectorResult[]> {
+export async function queryVectors(queryText: string, topK: number = 5): Promise<VectorResult[]> {
   const index = getVectorIndex()
   
   if (!index) {
@@ -140,14 +140,14 @@ export async function generateResponse(prompt: string, model: string = DEFAULT_M
       messages: [
         {
           role: 'system',
-          content: 'You are an AI digital twin representing a professional. Answer questions as if you are the person, speaking in first person about your background, skills, and experiences. Be specific, use examples, and demonstrate your expertise with quantifiable achievements.',
+          content: 'You are an AI assistant helping in an interview. You MUST ONLY use information from the provided professional context. NEVER make up or infer information not explicitly stated in the context. If the context does not contain relevant information to answer the question, you MUST say "I don\'t have specific information about that in my background" or similar. Speak in first person as the professional when answering.',
         },
         {
           role: 'user',
           content: prompt,
         },
       ],
-      temperature: 0.7,
+      temperature: 0.3,
       max_tokens: 500,
     })
 
@@ -161,7 +161,7 @@ export async function generateResponse(prompt: string, model: string = DEFAULT_M
 export async function ragQuery(question: string, useLLMFormatting: boolean = true): Promise<RAGResponse> {
   try {
     // Step 1: Search vector database
-    const vectorResults = await queryVectors(question, 3)
+    const vectorResults = await queryVectors(question, 5)
     
     if (!vectorResults || vectorResults.length === 0) {
       return {
@@ -172,10 +172,21 @@ export async function ragQuery(question: string, useLLMFormatting: boolean = tru
       }
     }
 
-    // Step 2: Extract context
+    // Step 2: Filter and extract context
+    // IMPORTANT: Exclude 'interview' and 'job_posting' types to prevent using Q&A as source material
     const contextPieces = vectorResults
-      .filter(result => result.content)
+      .filter(result => result.content && result.type !== 'interview' && result.type !== 'job_posting')
       .map(result => `${result.title}: ${result.content}`)
+    
+    // If filtering removed all results, fall back to reporting no info
+    if (contextPieces.length === 0) {
+      return {
+        success: false,
+        response: "I don't have specific information about that topic in my professional background.",
+        resultsFound: 0,
+        error: 'No relevant profile data found after filtering'
+      }
+    }
     
     const context = contextPieces.join('\\n\\n')
 
@@ -183,19 +194,20 @@ export async function ragQuery(question: string, useLLMFormatting: boolean = tru
     let response: string
     
     if (useLLMFormatting) {
-      const prompt = `Based on the following professional information, provide a compelling interview response:
+      const prompt = `You are answering an interview question. You MUST base your answer ONLY on the professional context provided below. DO NOT make up, infer, or assume any information not explicitly stated.
 
 Professional Context:
 ${context}
 
 Interview Question: ${question}
 
-Guidelines:
+CRITICAL INSTRUCTIONS:
+- Answer ONLY using information from the Professional Context above
+- If the context does not contain relevant information, say "I don't have specific information about that in my background"
 - Speak in first person as the professional
-- Include specific examples and metrics
-- Use STAR format (Situation-Task-Action-Result) when telling stories
-- Sound confident and natural
-- Directly address the question
+- Be specific and use examples from the context
+- Use STAR format when applicable
+- Sound natural and confident
 
 Response:`
 

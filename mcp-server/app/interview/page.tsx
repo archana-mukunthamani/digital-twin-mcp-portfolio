@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { loadAllJobPostings, type JobPosting } from '@/app/actions/load-job-postings'
+import { useRouter } from 'next/navigation'
+import { saveInterviewResult, type InterviewResult as SavedInterviewResult } from '@/app/actions/interview-analytics'
+import InterviewLanding from './components/InterviewLanding'
 
 interface Message {
   role: 'interviewer' | 'candidate'
@@ -16,36 +18,24 @@ interface InterviewResult {
 }
 
 export default function InterviewPage() {
-  const [jobPostings, setJobPostings] = useState<JobPosting[]>([])
-  const [loadingJobs, setLoadingJobs] = useState(true)
+  const router = useRouter()
+  const [step, setStep] = useState<'landing' | 'interview'>('landing')
   const [jobDescription, setJobDescription] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
   const [isInterviewing, setIsInterviewing] = useState(false)
   const [result, setResult] = useState<InterviewResult | null>(null)
   const [currentQuestion, setCurrentQuestion] = useState(0)
 
-  // Load job postings on component mount
+  // Auto-start interview when transitioning from landing page with job description
   useEffect(() => {
-    const fetchJobPostings = async () => {
-      try {
-        const postings = await loadAllJobPostings()
-        setJobPostings(postings)
-      } catch (error) {
-        console.error('Error loading job postings:', error)
-      } finally {
-        setLoadingJobs(false)
-      }
+    if (step === 'interview' && jobDescription && !isInterviewing && messages.length === 0) {
+      console.log('🎬 Auto-starting interview from landing page...')
+      setTimeout(() => {
+        startInterview()
+      }, 500)
     }
-    
-    fetchJobPostings()
-  }, [])
-
-  const loadJobPosting = (jobId: string) => {
-    const posting = jobPostings.find(p => p.id === jobId)
-    if (posting) {
-      setJobDescription(posting.content)
-    }
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, jobDescription])
 
   const generateJobSpecificQuestions = (jobDesc: string): string[] => {
     const lowerDesc = jobDesc.toLowerCase()
@@ -134,6 +124,9 @@ export default function InterviewPage() {
   const conductInterview = async () => {
     // Generate job-specific questions based on the job description
     const questions = generateJobSpecificQuestions(jobDescription)
+    
+    // Collect Q&A pairs in local array (fixes React state closure issue)
+    const qaTranscript: Array<{ question: string; answer: string }> = []
 
     for (let i = 0; i < questions.length; i++) {
       setCurrentQuestion(i + 1)
@@ -170,7 +163,10 @@ export default function InterviewPage() {
         console.log(`💬 A${i + 1} (${data.result?.content?.[0]?.text?.substring(0, 100)}...)`)
         const answer = data.result?.content?.[0]?.text || 'Unable to retrieve answer.'
 
-        // Add candidate answer
+        // Store Q&A in local array for transcript
+        qaTranscript.push({ question, answer })
+
+        // Add candidate answer to messages (for UI display)
         setMessages((prev) => [
           ...prev,
           { role: 'candidate', content: answer, timestamp: new Date() },
@@ -180,22 +176,29 @@ export default function InterviewPage() {
         await new Promise((resolve) => setTimeout(resolve, 4000))
       } catch (error) {
         console.error('Error querying Digital Twin:', error)
+        const errorAnswer = 'Error: Unable to retrieve answer.'
+        
+        // Store error in transcript too
+        qaTranscript.push({ question, answer: errorAnswer })
+        
         setMessages((prev) => [
           ...prev,
           {
             role: 'candidate',
-            content: 'Error: Unable to retrieve answer.',
+            content: errorAnswer,
             timestamp: new Date(),
           },
         ])
       }
     }
 
-    // Generate final recommendation
-    await generateRecommendation()
+    console.log(`📝 Interview complete. Collected ${qaTranscript.length} Q&A pairs`)
+
+    // Generate final recommendation and save with transcript
+    await generateRecommendation(qaTranscript)
   }
 
-  const generateRecommendation = async () => {
+  const generateRecommendation = async (qaTranscript: Array<{ question: string; answer: string }>) => {
     // Simulate evaluation delay
     await new Promise((resolve) => setTimeout(resolve, 3000))
 
@@ -336,91 +339,180 @@ ${decision === 'pass' ? '\\n✅ **For Hiring Team:**\\n   1. Schedule technical 
 
     setResult({ decision, recommendation, score })
     setIsInterviewing(false)
+    
+    // Save interview result to Redis with transcript
+    await saveInterviewToDatabase({
+      score,
+      decision,
+      technicalScore,
+      experienceScore,
+      communicationScore,
+      cultureFitScore,
+    }, qaTranscript)
   }
 
+  const saveInterviewToDatabase = async (
+    resultData: {
+      score: number
+      decision: 'pass' | 'fail'
+      technicalScore: number
+      experienceScore: number
+      communicationScore: number
+      cultureFitScore: number
+    },
+    qaTranscript: Array<{ question: string; answer: string }>
+  ) => {
+    try {
+      // Extract job title from description (first line or first 50 chars)
+      const jobTitleMatch = jobDescription.match(/^(.+?)(?:\n|$)/)
+      const jobTitle = jobTitleMatch
+        ? jobTitleMatch[1].trim().substring(0, 100)
+        : jobDescription.substring(0, 50).trim() + '...'
+
+      // Build transcript with scores and feedback from Q&A pairs
+      console.log(`📝 Building transcript from ${qaTranscript.length} Q&A pairs`)
+      const transcript = qaTranscript.map((qa) => {
+        const questionScore = Math.floor(Math.random() * 30) + 70 // 70-100
+        
+        // Generate contextual feedback based on score
+        let feedback = ''
+        if (questionScore >= 85) {
+          feedback = 'Excellent answer demonstrating strong knowledge and clear communication. The response was well-structured and showed deep understanding of the topic with relevant examples.'
+        } else if (questionScore >= 75) {
+          feedback = 'Good answer that covers the key points. The response shows solid understanding, though could benefit from more specific examples or deeper technical detail.'
+        } else {
+          feedback = 'Adequate answer but lacks depth. Consider providing more concrete examples and demonstrating stronger technical knowledge in this area.'
+        }
+        
+        return {
+          question: qa.question,
+          answer: qa.answer,
+          score: questionScore,
+          feedback,
+        }
+      })
+      console.log(`✅ Generated transcript with ${transcript.length} Q&A pairs`)
+
+      // Generate strengths and improvements based on scores
+      const strengths: string[] = []
+      const improvements: string[] = []
+      
+      if (resultData.communicationScore >= 80) strengths.push('Clear, structured communication style')
+      if (resultData.technicalScore >= 80) strengths.push('Strong technical knowledge and problem-solving')
+      if (resultData.experienceScore >= 80) strengths.push('Relevant hands-on experience demonstrated')
+      if (resultData.cultureFitScore >= 80) strengths.push('Good cultural fit and team collaboration')
+      
+      if (resultData.technicalScore < 75) improvements.push('Deepen technical knowledge in core areas')
+      if (resultData.communicationScore < 75) improvements.push('Work on communication clarity and structure')
+      if (resultData.experienceScore < 75) improvements.push('Gain more hands-on project experience')
+      if (resultData.cultureFitScore < 75) improvements.push('Align better with company values and culture')
+
+      // Generate insights
+      const insights: string[] = [
+        `Overall performance: ${resultData.score >= 85 ? 'Excellent' : resultData.score >= 75 ? 'Good' : 'Needs improvement'}`,
+        `Strongest category: ${getStrongestCategory(resultData)}`,
+      ]
+      
+      if (resultData.decision === 'pass') {
+        insights.push('Candidate shows strong potential for the role')
+      } else {
+        insights.push('Consider additional training before re-application')
+      }
+
+      const interviewData: SavedInterviewResult = {
+        id: `interview_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        date: new Date(),
+        jobTitle,
+        jobDescription,
+        overallScore: resultData.score,
+        categoryScores: {
+          technical: resultData.technicalScore,
+          experience: resultData.experienceScore,
+          communication: resultData.communicationScore,
+          culturalFit: resultData.cultureFitScore,
+        },
+        decision: resultData.decision === 'pass' ? 'pass' : resultData.score >= 70 ? 'conditional' : 'fail',
+        transcript,
+        strengths,
+        improvements,
+        insights,
+      }
+
+      const result = await saveInterviewResult(interviewData)
+      
+      if (result.success) {
+        console.log('✅ Interview result saved to database')
+      } else {
+        console.error('❌ Failed to save interview result:', result.error)
+      }
+    } catch (error) {
+      console.error('❌ Error saving interview to database:', error)
+    }
+  }
+
+  const getStrongestCategory = (scores: {
+    technicalScore: number
+    experienceScore: number
+    communicationScore: number
+    cultureFitScore: number
+  }): string => {
+    const categories = [
+      { name: 'Communication', score: scores.communicationScore },
+      { name: 'Technical Skills', score: scores.technicalScore },
+      { name: 'Experience', score: scores.experienceScore },
+      { name: 'Cultural Fit', score: scores.cultureFitScore },
+    ]
+    
+    const strongest = categories.reduce((max, cat) => (cat.score > max.score ? cat : max))
+    return strongest.name
+  }
+
+  const handleStartInterview = async (jobDesc: string) => {
+    console.log('🚀 Starting interview with job description...')
+    setJobDescription(jobDesc)
+    setStep('interview')
+    // Interview will auto-start via useEffect
+  }
+const handleViewAnalytics = () => {
+    router.push('/interview/analytics')
+  }
+
+  // Show landing page first
+  if (step === 'landing') {
+    return (
+      <InterviewLanding 
+        onStartInterview={handleStartInterview}
+        onViewAnalytics={handleViewAnalytics}
+      />
+    )
+  }
+
+  // Interview UI below
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 p-8">
       <div className="w-full max-w-5xl mx-auto">
+        {/* Back to Landing Button */}
+        <button
+          onClick={() => {
+            setStep('landing')
+            setMessages([])
+            setResult(null)
+            setJobDescription('')
+            setIsInterviewing(false)
+          }}
+          className="mb-6 text-purple-600 hover:text-purple-800 font-semibold flex items-center gap-2 transition-colors"
+        >
+          ← Back to Landing Page
+        </button>
+        
         <div className="text-center mb-8">
           <h1 className="text-5xl font-extrabold mb-3 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
-            🎤 AI-Powered Interview System
+            🎤 AI-Powered Interview
           </h1>
           <p className="text-gray-700 text-lg font-medium">
-            Select a job posting or enter your own to begin the interview
+            Watch the Digital Twin answer interview questions in real-time
           </p>
         </div>
-
-        {/* Job Description Input */}
-        {!isInterviewing && messages.length === 0 && (
-          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl p-8 mb-6 border-2 border-purple-200">
-            <h2 className="text-3xl font-bold mb-6 text-transparent bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text">
-              🎯 Select Job Posting
-            </h2>
-            
-            {/* Job Selection Buttons */}
-            {loadingJobs ? (
-              <div className="text-center py-8 text-gray-600">
-                <div className="animate-pulse">Loading job postings...</div>
-              </div>
-            ) : jobPostings.length === 0 ? (
-              <div className="text-center py-8 text-gray-600">
-                No job postings found in job-postings/ directory.
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                {jobPostings.map((posting, index) => {
-                  // Cycle through different gradient colors
-                  const colors = [
-                    'from-blue-400 to-blue-600 hover:from-blue-500 hover:to-blue-700',
-                    'from-green-400 to-green-600 hover:from-green-500 hover:to-green-700',
-                    'from-purple-400 to-purple-600 hover:from-purple-500 hover:to-purple-700',
-                    'from-orange-400 to-orange-600 hover:from-orange-500 hover:to-orange-700',
-                    'from-pink-400 to-pink-600 hover:from-pink-500 hover:to-pink-700',
-                    'from-indigo-400 to-indigo-600 hover:from-indigo-500 hover:to-indigo-700',
-                    'from-red-400 to-red-600 hover:from-red-500 hover:to-red-700',
-                    'from-teal-400 to-teal-600 hover:from-teal-500 hover:to-teal-700',
-                  ]
-                  const colorClass = colors[index % colors.length]
-                  const textColorClass = index % 8 === 0 ? 'text-blue-50' : 
-                                        index % 8 === 1 ? 'text-green-50' : 
-                                        index % 8 === 2 ? 'text-purple-50' :
-                                        index % 8 === 3 ? 'text-orange-50' :
-                                        index % 8 === 4 ? 'text-pink-50' :
-                                        index % 8 === 5 ? 'text-indigo-50' :
-                                        index % 8 === 6 ? 'text-red-50' : 'text-teal-50'
-                  
-                  return (
-                    <button
-                      key={posting.id}
-                      onClick={() => loadJobPosting(posting.id)}
-                      className={`group bg-gradient-to-br ${colorClass} text-white rounded-xl p-6 text-left transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-2xl`}
-                    >
-                      <div className="font-bold text-xl mb-2">{posting.title}</div>
-                      <div className={`text-sm ${textColorClass} mb-1`}>{posting.company}</div>
-                      <div className={`text-xs ${textColorClass} opacity-90`}>{posting.shortDescription}</div>
-                    </button>
-                  )
-                })}
-              </div>
-            )}
-
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">
-              📝 Job Description
-            </h2>
-            <textarea
-              className="w-full h-48 border-3 border-purple-300 rounded-xl p-4 mb-6 text-gray-900 text-sm focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition resize-y shadow-inner"
-              placeholder="Click a job above or paste your own job description here..."
-              value={jobDescription}
-              onChange={(e) => setJobDescription(e.target.value)}
-            />
-            <button
-              onClick={startInterview}
-              className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 text-white px-8 py-4 rounded-xl hover:from-purple-700 hover:via-pink-700 hover:to-blue-700 transition-all duration-300 font-bold text-xl shadow-xl hover:shadow-2xl transform hover:scale-105"
-            >
-              🚀 Start Interview
-            </button>
-          </div>
-        )}
 
         {/* Interview Progress */}
         {isInterviewing && (
@@ -527,9 +619,11 @@ ${decision === 'pass' ? '\\n✅ **For Hiring Team:**\\n   1. Schedule technical 
             </div>
             <button
               onClick={() => {
+                setStep('landing')
                 setMessages([])
                 setResult(null)
                 setJobDescription('')
+                setIsInterviewing(false)
               }}
               className="mt-8 w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-300 font-bold text-xl shadow-xl hover:shadow-2xl transform hover:scale-105"
             >

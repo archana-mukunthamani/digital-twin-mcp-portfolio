@@ -1,5 +1,6 @@
-import DigitalTwinUI from './components/DigitalTwinUI'
+import { redirect } from 'next/navigation'
 
 export default function HomePage() {
-  return <DigitalTwinUI />
+  // Redirect to the new interview landing page
+  redirect('/interview')
 }

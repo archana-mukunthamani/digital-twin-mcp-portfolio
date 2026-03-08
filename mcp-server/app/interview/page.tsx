@@ -202,15 +202,46 @@ export default function InterviewPage() {
     // Simulate evaluation delay
     await new Promise((resolve) => setTimeout(resolve, 3000))
 
-    // Analyze the responses and generate comprehensive report
-    const score = Math.floor(Math.random() * 30) + 70 // 70-100 score
-    const decision = score >= 75 ? 'pass' : 'fail'
+    // Check how many questions were actually answered (not errors or "Unable to retrieve")
+    const validAnswers = qaTranscript.filter(qa => 
+      qa.answer && 
+      !qa.answer.includes('Unable to retrieve answer') && 
+      !qa.answer.includes('Error:') &&
+      !qa.answer.includes("I don't have specific information")
+    ).length
     
-    // Generate comprehensive assessment report
-    const technicalScore = Math.floor(Math.random() * 20) + 70 // 70-90
-    const experienceScore = Math.floor(Math.random() * 20) + 75 // 75-95
-    const cultureFitScore = Math.floor(Math.random() * 25) + 65 // 65-90
-    const communicationScore = Math.floor(Math.random() * 15) + 80 // 80-95
+    const totalQuestions = qaTranscript.length
+    const answerRate = totalQuestions > 0 ? (validAnswers / totalQuestions) : 0
+    
+    // Base score on answer rate (0-5 valid = score penalty)
+    let baseScore = 70
+    if (validAnswers === 0) {
+      baseScore = 35  // Critical fail
+    } else if (validAnswers === 1) {
+      baseScore = 50  // Poor
+    } else if (validAnswers === 2) {
+      baseScore = 60  // Below average  
+    } else if (validAnswers === 3) {
+      baseScore = 70  // Average
+    } else if (validAnswers === 4) {
+      baseScore = 80  // Good
+    } else {
+      baseScore = 85  // Excellent (all 5 answered)
+    }
+    
+    // Add small random variance (±5 points)
+    const score = Math.min(100, Math.max(0, baseScore + Math.floor(Math.random() * 11) - 5))
+    const decision = score >= 70 ? 'pass' : 'fail'
+    
+    console.log(`📊 Evaluation: ${validAnswers}/${totalQuestions} answered, Score: ${score}, Decision: ${decision.toUpperCase()}`)
+    
+    // Generate comprehensive assessment report based on answer quality
+    // Category scores should reflect the overall answer rate
+    const categoryBase = Math.floor(score * 0.8)  // Base categories on overall score
+    const technicalScore = Math.min(100, categoryBase + Math.floor(Math.random() * 15) - 5)
+    const experienceScore = Math.min(100, categoryBase + Math.floor(Math.random() * 15) - 5)
+    const cultureFitScore = Math.max(0, Math.min(100, categoryBase + Math.floor(Math.random() * 20) - 10))
+    const communicationScore = validAnswers === 0 ? 30 : Math.min(100, categoryBase + Math.floor(Math.random() * 15))
 
     // Extract job-specific details
     const lowerDesc = jobDescription.toLowerCase()
@@ -372,16 +403,36 @@ ${decision === 'pass' ? '\\n✅ **For Hiring Team:**\\n   1. Schedule technical 
       // Build transcript with scores and feedback from Q&A pairs
       console.log(`📝 Building transcript from ${qaTranscript.length} Q&A pairs`)
       const transcript = qaTranscript.map((qa) => {
-        const questionScore = Math.floor(Math.random() * 30) + 70 // 70-100
+        // Check if answer is valid (not error or "Unable to retrieve")
+        const isValidAnswer = qa.answer && 
+          !qa.answer.includes('Unable to retrieve answer') && 
+          !qa.answer.includes('Error:') &&
+          !qa.answer.includes("I don't have specific information")
+        
+        // Score based on answer validity and length/quality
+        let questionScore = 0
+        if (!isValidAnswer) {
+          questionScore = 0  // No answer = 0 score
+        } else if (qa.answer.length < 50) {
+          questionScore = Math.floor(Math.random() * 20) + 40 // 40-60 for very short answers
+        } else if (qa.answer.length < 150) {
+          questionScore = Math.floor(Math.random() * 20) + 60 // 60-80 for short answers
+        } else {
+          questionScore = Math.floor(Math.random() * 30) + 70 // 70-100 for detailed answers
+        }
         
         // Generate contextual feedback based on score
         let feedback = ''
-        if (questionScore >= 85) {
+        if (questionScore === 0) {
+          feedback = 'Unable to provide answer. The system could not retrieve relevant information from the professional background for this question. This may indicate a gap in documented experience for this specific area.'
+        } else if (questionScore >= 85) {
           feedback = 'Excellent answer demonstrating strong knowledge and clear communication. The response was well-structured and showed deep understanding of the topic with relevant examples.'
         } else if (questionScore >= 75) {
           feedback = 'Good answer that covers the key points. The response shows solid understanding, though could benefit from more specific examples or deeper technical detail.'
-        } else {
+        } else if (questionScore >= 60) {
           feedback = 'Adequate answer but lacks depth. Consider providing more concrete examples and demonstrating stronger technical knowledge in this area.'
+        } else {
+          feedback = 'Brief answer with limited detail. The response needs significant expansion with specific examples and technical depth to be competitive.'
         }
         
         return {

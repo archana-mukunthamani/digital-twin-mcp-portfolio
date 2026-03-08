@@ -160,8 +160,8 @@ export async function generateResponse(prompt: string, model: string = DEFAULT_M
 
 export async function ragQuery(question: string, useLLMFormatting: boolean = true): Promise<RAGResponse> {
   try {
-    // Step 1: Search vector database
-    const vectorResults = await queryVectors(question, 5)
+    // Step 1: Search vector database with higher topK to account for filtering
+    const vectorResults = await queryVectors(question, 10)  // Increased from 5 to 10
     
     if (!vectorResults || vectorResults.length === 0) {
       return {
@@ -172,22 +172,24 @@ export async function ragQuery(question: string, useLLMFormatting: boolean = tru
       }
     }
 
-    // Step 2: Filter and extract context
-    // IMPORTANT: Exclude 'interview' and 'job_posting' types to prevent using Q&A as source material
-    const contextPieces = vectorResults
+    // Step 2: Filter and extract context - Prioritize profile data
+    // Exclude 'interview' and 'job_posting' types to prevent using Q&A as source material
+    const profileResults = vectorResults
       .filter(result => result.content && result.type !== 'interview' && result.type !== 'job_posting')
-      .map(result => `${result.title}: ${result.content}`)
     
-    // If filtering removed all results, fall back to reporting no info
-    if (contextPieces.length === 0) {
+    // If we have enough profile data (3+), use only that. Otherwise, use all results as fallback
+    const resultsToUse = profileResults.length >= 3 ? profileResults : vectorResults.filter(result => result.content)
+    
+    if (resultsToUse.length === 0) {
       return {
         success: false,
         response: "I don't have specific information about that topic in my professional background.",
         resultsFound: 0,
-        error: 'No relevant profile data found after filtering'
+        error: 'No relevant data found after filtering'
       }
     }
     
+    const contextPieces = resultsToUse.map(result => `${result.title}: ${result.content}`)
     const context = contextPieces.join('\\n\\n')
 
     // Step 3: Generate response

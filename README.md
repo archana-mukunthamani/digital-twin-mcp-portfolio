@@ -348,7 +348,7 @@ interface InterviewResult {
 }
 ```
 
-## 👤 Author
+## 👤 Author & Contact
 
 **Archana Mukunthamani** - *Primary Developer & Sole Contributor*
 
@@ -359,7 +359,10 @@ interface InterviewResult {
 - 🚀 Vercel deployment and production configuration
 - 📊 94% of all commits and entire core functionality
 
-**GitHub**: [@archana-mukunthamani](https://github.com/archana-mukunthamani)
+**Connect with me:**
+- 💼 LinkedIn: [linkedin.com/in/archana-mukunthamani](https://www.linkedin.com/in/archana-mukunthamani)
+- 📧 Email: archana.mukunthamani@gmail.com
+- 🐙 GitHub: [@archana-mukunthamani](https://github.com/archana-mukunthamani)
 
 ### Acknowledgments
 
@@ -418,14 +421,7 @@ This is a portfolio project, but suggestions are welcome! Feel free to:
 
 MIT License - feel free to use this project as a reference or starting point for your own digital twin assistant.
 
-## 👤 Contact
-
-**Your Name**
-- LinkedIn: [your-linkedin-url]
-- GitHub: [@your-username](https://github.com/your-username)
-- Email: your.email@example.com
-
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 - Reference architecture from [Roll Dice MCP Server](https://github.com/gocallum/rolldice-mcpserver.git)
 - RAG implementation inspired by [Digital Twin Python Reference](https://github.com/gocallum/binal_digital-twin_py.git)

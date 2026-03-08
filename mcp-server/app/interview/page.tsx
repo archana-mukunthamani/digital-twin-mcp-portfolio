@@ -125,6 +125,16 @@ export default function InterviewPage() {
     // Generate job-specific questions based on the job description
     const questions = generateJobSpecificQuestions(jobDescription)
     
+    // Extract company name from job description (first few words or first line)
+    const companyNameMatch = jobDescription.match(/(?:at|for|with)\s+([A-Z][A-Za-z\s&]+?)(?:\s*[-–—]\s*|\n|$)/)
+    const companyName = companyNameMatch ? companyNameMatch[1].trim() : 'the target company'
+    
+    // Extract job title
+    const jobTitleMatch = jobDescription.match(/^(.+?)(?:\s*[-–—]\s*|\n)/)
+    const jobTitle = jobTitleMatch ? jobTitleMatch[1].trim() : 'this position'
+    
+    console.log(`📋 Interview Context: Job="${jobTitle}" Company="${companyName}"`)
+    
     // Collect Q&A pairs in local array (fixes React state closure issue)
     const qaTranscript: Array<{ question: string; answer: string }> = []
 
@@ -145,6 +155,17 @@ export default function InterviewPage() {
       try {
         console.log(`🎤 Q${i + 1}:`, question)
         
+        // Enhance question with job context for company/position-related questions
+        let enhancedQuestion = question
+        if (question.toLowerCase().includes('interested') && 
+            (question.toLowerCase().includes('position') || question.toLowerCase().includes('company'))) {
+          // For "Why are you interested" questions, prepend context
+          enhancedQuestion = `[JOB CONTEXT: The target position is "${jobTitle}" at "${companyName}"]\\n\\n${question}\\n\\nIMPORTANT: Answer about your interest in "${companyName}" (the TARGET company). Do NOT mention or confuse with past employer companies from your background.`
+        } else if (question.toLowerCase().includes('this role') || question.toLowerCase().includes('this position')) {
+          // For role-specific questions, add job title context
+          enhancedQuestion = `[JOB CONTEXT: The position is "${jobTitle}"]\\n\\n${question}`
+        }
+        
         const response = await fetch('/api/mcp', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -154,7 +175,7 @@ export default function InterviewPage() {
             method: 'tools/call',
             params: {
               name: 'query_digital_twin',
-              arguments: { query: question },
+              arguments: { query: enhancedQuestion },
             },
           }),
         })

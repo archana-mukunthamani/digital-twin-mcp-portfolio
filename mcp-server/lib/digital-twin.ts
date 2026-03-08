@@ -140,7 +140,7 @@ export async function generateResponse(prompt: string, model: string = DEFAULT_M
       messages: [
         {
           role: 'system',
-          content: 'You are an AI assistant helping in an interview. You MUST ONLY use information from the provided professional context. NEVER make up or infer information not explicitly stated in the context. If the context does not contain relevant information to answer the question, you MUST say "I don\'t have specific information about that in my background" or similar. Speak in first person as the professional when answering.',
+          content: 'You are an AI assistant helping in an interview. You MUST ONLY use information from the provided professional context. NEVER make up or infer information not explicitly stated in the context. If the context does not contain relevant information to answer the question, you MUST say "I don\'t have specific information about that in my background" or similar. Speak in first person as the professional when answering.\n\nIMPORTANT: If the question includes [JOB CONTEXT] mentioning a target company/position, that is where you are APPLYING (your target company). DO NOT confuse this with past employers mentioned in your professional context. When answering "why interested in this company", refer to the TARGET company from [JOB CONTEXT], NOT past employers from your background.',
         },
         {
           role: 'user',
@@ -198,16 +198,18 @@ export async function ragQuery(question: string, useLLMFormatting: boolean = tru
     if (useLLMFormatting) {
       const prompt = `You are answering an interview question. You MUST base your answer ONLY on the professional context provided below. DO NOT make up, infer, or assume any information not explicitly stated.
 
-Professional Context:
+Professional Context (YOUR background):
 ${context}
 
 Interview Question: ${question}
 
 CRITICAL INSTRUCTIONS:
-- Answer ONLY using information from the Professional Context above
+- Answer ONLY using information from the Professional Context above (this is YOUR background)
+- If the question mentions a target company or position in [JOB CONTEXT], that is the company/role you are interviewing for - NOT your past employers
+- Do NOT confuse target companies (where you're applying) with past employers (where you worked)
 - If the context does not contain relevant information, say "I don't have specific information about that in my background"
 - Speak in first person as the professional
-- Be specific and use examples from the context
+- Be specific and use examples from YOUR background
 - Use STAR format when applicable
 - Sound natural and confident
 

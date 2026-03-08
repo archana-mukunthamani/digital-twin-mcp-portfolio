@@ -60,6 +60,8 @@ export interface AnalyticsSummary {
     culturalFit: number
   }>
   insights: string[]
+  commonStrengths: Array<{ label: string; count: number }>
+  commonImprovements: Array<{ label: string; count: number }>
 }
 
 // ─── Save Interview Result ────────────────────────────────────────────────────
@@ -173,6 +175,8 @@ export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
         recentInterviews: [],
         performanceTrend: [],
         insights: [],
+        commonStrengths: [],
+        commonImprovements: [],
       }
     }
     
@@ -230,6 +234,30 @@ export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
     const allInsights = interviews.flatMap((interview) => interview.insights)
     const uniqueInsights = [...new Set(allInsights)].slice(0, 4)
     
+    // Aggregate strengths from all interviews
+    const strengthCounts = new Map<string, number>()
+    interviews.forEach((interview) => {
+      interview.strengths.forEach((strength) => {
+        strengthCounts.set(strength, (strengthCounts.get(strength) || 0) + 1)
+      })
+    })
+    const commonStrengths = Array.from(strengthCounts.entries())
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5)
+    
+    // Aggregate improvements from all interviews
+    const improvementCounts = new Map<string, number>()
+    interviews.forEach((interview) => {
+      interview.improvements.forEach((improvement) => {
+        improvementCounts.set(improvement, (improvementCounts.get(improvement) || 0) + 1)
+      })
+    })
+    const commonImprovements = Array.from(improvementCounts.entries())
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5)
+    
     return {
       totalInterviews,
       averageScore,
@@ -238,6 +266,8 @@ export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
       recentInterviews,
       performanceTrend,
       insights: uniqueInsights,
+      commonStrengths,
+      commonImprovements,
     }
   } catch (error) {
     console.error('Failed to get analytics summary:', error)
@@ -255,6 +285,8 @@ export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
       recentInterviews: [],
       performanceTrend: [],
       insights: [],
+      commonStrengths: [],
+      commonImprovements: [],
     }
   }
 }

@@ -70,6 +70,8 @@ interface AnalyticsData {
   recentInterviews: RecentInterview[]
   performanceTrend: PerformanceTrendPoint[]
   insights: string[]
+  commonStrengths: Array<{ label: string; count: number }>
+  commonImprovements: Array<{ label: string; count: number }>
 }
 
 interface AnalyticsDashboardProps {
@@ -110,6 +112,8 @@ const DEMO_DATA: AnalyticsData = {
     'Recent interviews show a 15% improvement trend over the past month',
     'Consider deepening algorithm and data-structure knowledge to lift technical scores',
   ],
+  commonStrengths: [],
+  commonImprovements: [],
 }
 
 const STRENGTHS = [
@@ -642,44 +646,52 @@ Powered by Digital Twin MCP Server
           <FadeIn delay={0}>
             <div className="h-full backdrop-blur-md bg-white/[0.05] border border-white/10 rounded-2xl p-6 md:p-8">
               <h2 className="text-xl font-semibold text-slate-100 mb-5">Common Strengths</h2>
-              <ul className="space-y-3" aria-label="Common strengths list">
-                {STRENGTHS.map(({ label, count }) => (
-                  <li key={label} className="flex items-start gap-3 group">
-                    <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
-                    <div className="flex-1 min-w-0">
-                      <span className="text-sm text-slate-300 group-hover:text-slate-100 transition-colors">{label}</span>
-                    </div>
-                    <Badge className="flex-shrink-0 bg-emerald-500/10 text-emerald-400 border-emerald-500/25 text-xs px-2 py-0.5">
-                      {count}x
-                    </Badge>
-                  </li>
-                ))}
-              </ul>
+              {data.commonStrengths.length > 0 ? (
+                <ul className="space-y-3" aria-label="Common strengths list">
+                  {data.commonStrengths.map(({ label, count }) => (
+                    <li key={label} className="flex items-start gap-3 group">
+                      <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm text-slate-300 group-hover:text-slate-100 transition-colors">{label}</span>
+                      </div>
+                      <Badge className="flex-shrink-0 bg-emerald-500/10 text-emerald-400 border-emerald-500/25 text-xs px-2 py-0.5">
+                        {count}x
+                      </Badge>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-slate-400 text-sm">Complete interviews to see your common strengths</p>
+              )}
             </div>
           </FadeIn>
 
           <FadeIn delay={100}>
             <div className="h-full backdrop-blur-md bg-white/[0.05] border border-white/10 rounded-2xl p-6 md:p-8">
               <h2 className="text-xl font-semibold text-slate-100 mb-5">Areas for Improvement</h2>
-              <ul className="space-y-3" aria-label="Areas for improvement list">
-                {IMPROVEMENTS.map(({ label, count }) => (
-                  <li key={label} className="flex items-start gap-3 group">
-                    <AlertTriangle className="w-4 h-4 text-orange-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
-                    <div className="flex-1 min-w-0">
-                      <span className="text-sm text-slate-300 group-hover:text-slate-100 transition-colors">{label}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                      <Badge className="bg-orange-500/10 text-orange-400 border-orange-500/25 text-xs px-2 py-0.5">
-                        {count}x
-                      </Badge>
-                      <Button variant="ghost" size="sm"
-                        className="text-[10px] text-orange-400 hover:text-orange-300 hover:bg-orange-500/10 px-2 py-1 rounded-md border border-orange-500/20 hover:border-orange-500/35 transition-all duration-200 h-auto">
-                        Practice
-                      </Button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              {data.commonImprovements.length > 0 ? (
+                <ul className="space-y-3" aria-label="Areas for improvement list">
+                  {data.commonImprovements.map(({ label, count }) => (
+                    <li key={label} className="flex items-start gap-3 group">
+                      <AlertTriangle className="w-4 h-4 text-orange-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm text-slate-300 group-hover:text-slate-100 transition-colors">{label}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <Badge className="bg-orange-500/10 text-orange-400 border-orange-500/25 text-xs px-2 py-0.5">
+                          {count}x
+                        </Badge>
+                        <Button variant="ghost" size="sm"
+                          className="text-[10px] text-orange-400 hover:text-orange-300 hover:bg-orange-500/10 px-2 py-1 rounded-md border border-orange-500/20 hover:border-orange-500/35 transition-all duration-200 h-auto">
+                          Practice
+                        </Button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-slate-400 text-sm">Complete interviews to identify areas for improvement</p>
+              )}
             </div>
           </FadeIn>
         </div>

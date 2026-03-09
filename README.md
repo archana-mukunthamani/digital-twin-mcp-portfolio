@@ -361,7 +361,6 @@ interface InterviewResult {
 
 **Connect with me:**
 - 💼 LinkedIn: [linkedin.com/in/archana-mukunthamani](https://www.linkedin.com/in/archana-mukunthamani)
-- 📧 Email: archana.mukunthamani@gmail.com
 - 🐙 GitHub: [@archana-mukunthamani](https://github.com/archana-mukunthamani)
 
 ### Acknowledgments
